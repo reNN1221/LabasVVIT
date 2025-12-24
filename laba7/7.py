@@ -1,133 +1,214 @@
-class Employee:  # Класс с общими атрибутами для сотрудников
-    def __init__(self, name, id, salary):
+class Employee:
+    def __init__(self, name, id):
         self.name = name
         self.id = id
-        self.salary = salary
     def get_info(self):
-        return f"ID: {self.id}, Имя: {self.name}, Зарплата: {self.salary}"
-    def calculate_salary(self):
-        return self.salary
-
-
+        return f"Сотрудник: {self.name}, ID: {self.id}"
 class Manager(Employee):
-    def __init__(self, name, id, salary, department, projects=None, team=None):
-        super().__init__(name, id, salary)
+    def __init__(self, name, id, department):
+        Employee.__init__(self, name, id)
         self.department = department
-        self.projects = projects if projects is not None else []
-        self.team = team if team is not None else []
-
+        self.project = "Нет проекта"
     def manage_project(self, project_name):
-        self.projects.append(project_name)
-        return f"Проект '{project_name}' добавлен в отдел {self.department}"
-
-    def add_to_team(self, employee):
+        self.project = project_name
+        return f"Менеджер {self.name} управляет проектом: {project_name}"
+    def get_info(self):
+        base_info = Employee.get_info(self)
+        return f"{base_info}, Отдел: {self.department}, Проект: {self.project}"
+class Technician(Employee):
+    def __init__(self, name, id, specialization):
+        Employee.__init__(self, name, id)
+        self.__specialization = specialization
+        self.maintenance_status = False
+    def perform_maintenance(self):
+        self.maintenance_status = True
+        return f"Техник {self.name} выполнил обслуживание ({self.__specialization})"
+    def get_info(self):
+        base_info = Employee.get_info(self)
+        status = "Выполнено" if self.maintenance_status else "Не выполнено"
+        return f"{base_info}, Специализация: {self.__specialization}, Обслуживание: {status}"
+    def get_specialization(self): ###
+        return self.__specialization
+class TechManager(Manager, Technician):
+    def __init__(self, name, id, department, specialization):
+        Manager.__init__(self, name, id, department)
+        Technician.__init__(self, name, id, specialization)
+        self.project = "Нет проекта"
+        self.maintenance_status = False
+        self.team = []
+    def add_employee(self, employee):
         self.team.append(employee)
-        return f"Сотрудник {employee.name} добавлен в команду менеджера {self.name}"
-
+        return f"{employee.name} добавлен в команду {self.name}"
     def get_team_info(self):
         if not self.team:
-            return "Команда пуста"
-        return "\n".join(emp.get_info() for emp in self.team)
-
-    def calculate_salary(self):
-        return self.salary * 1.2  # пример управленческой надбавки
-
-
-class Technician(Employee):
-    def __init__(self, name, id, salary, spezialization, sertifications=None):
-        super().__init__(name, id, salary)
-        self.spezialization = spezialization
-        self.sertifications = sertifications if sertifications is not None else []
-
-    def perform_maintenance(self):
-        return f"{self.name} Выполняет техническое обслуживание в обслати {self.spezialization}"
-
-    def add_sertifications(self, sert):
-        self.sertifications.append(sert)
-
-    def calculate_salary(self):
-        return self.salary * 1.1
-
-
-class TechManager(Manager, Technician):
-    def __init__(self, name, emp_id, salary, department, specialization, technical_projects=None):
-        Manager.__init__(self, name, id, salary, department)
-        Technician.__init__(self, name, id, salary, specialization)
-        self.technical_projects = technical_projects if technical_projects is not None else []
-
-    def manage_project(self, project_name):
-        return Manager.manage_project(self, project_name)
-
-    def perform_maintenance(self):
-        return Technician.perform_maintenance(self)
-
-    def assign_task(self, employee, task):
-        if employee in self.team:
-            return f"TechManager {self.name}, назначил задачу '{task.title}' сотруднику {employee.name}"
-        return f"{employee.name} не в команде"
-
-    def add_employee(self, employee):
-        return Manager.add_to_team(self, employee)
-
-    def get_team_info(self):
-        return Manager.get_team_info(self)
-
-    def calculate_salary(self):
-        manager_salary = Manager.calculate_salary(self)
-        tech_salary = Technician.calculate_salary(self)
-        return (manager_salary + tech_salary) / 2
-
+            return "В команде пока нет сотрудников"
+        result = f"Команда {self.name}:\n"
+        for i, employee in enumerate(self.team, 1):
+            result += f"{i}. {employee.get_info()}\n"
+        return result
     def get_info(self):
-        return f"TechManager: {self.name}, ID: {self.id}, Отдел: {self.department}, Специализация: {self.spezialization}"
+        info = f"TechManager: {self.name}, ID: {self.id}"
+        info += f", Отдел: {self.department}"
+        info += f", Проект: {self.project}"
+        info += f", Специализация: {Technician.get_specialization(self)}"
+        status = "Выполнено" if self.maintenance_status else "Не выполнено"
+        info += f", Обслуживание: {status}"
+        return info
+    def manage_project(self, project_name):
+        self.project = project_name
+        return f"TechManager {self.name} проект: {project_name}"
+    def perform_maintenance(self):
+        self.maintenance_status = True
+        return f"TechManager {self.name} выполнил обслуживание"
+
+
+def create_employee():
+    print("\n--- Создание обычного сотрудника ---")
+    name = input("Введите имя сотрудника: ")
+    emp_id = input("Введите ID сотрудника: ")
+    employee = Employee(name, emp_id)
+    print(f"Создан сотрудник: {employee.get_info()}")
+    return employee
+
+
+def create_manager():
+    print("\n--- Создание менеджера ---")
+    name = input("Введите имя менеджера: ")
+    emp_id = input("Введите ID менеджера: ")
+    department = input("Введите отдел менеджера: ")
+    manager = Manager(name, emp_id, department)
+    print(f"Создан менеджер: {manager.get_info()}")
+
+    project_choice = input("Хотите назначить проект менеджеру? (да/нет): ").lower()
+    if project_choice == 'да':
+        project_name = input("Введите название проекта: ")
+        print(manager.manage_project(project_name))
+
+    print(f"Менеджер полная информация: {manager.get_info()}")
+    return manager
+
+
+def create_technician():
+    print("\n--- Создание техника ---")
+    name = input("Введите имя техника: ")
+    emp_id = input("Введите ID техника: ")
+    specialization = input("Введите специализацию техника: ")
+    technician = Technician(name, emp_id, specialization)
+    print(f"Создан техник: {technician.get_info()}")
+
+    maintenance_choice = input("Хотите, чтобы техник выполнил обслуживание? (да/нет): ").lower()
+    if maintenance_choice == 'да':
+        print(technician.perform_maintenance())
+
+    print(f"Техник полная информация: {technician.get_info()}")
+    return technician
+
+
+def create_tech_manager():
+    print("\n--- Создание TechManager ---")
+    name = input("Введите имя TechManager: ")
+    emp_id = input("Введите ID TechManager: ")
+    department = input("Введите отдел TechManager: ")
+    specialization = input("Введите специализацию TechManager: ")
+    tech_manager = TechManager(name, emp_id, department, specialization)
+    print(f"Создан TechManager: {tech_manager.get_info()}")
+
+    project_choice = input("Хотите назначить проект TechManager? (да/нет): ").lower()
+    if project_choice == 'да':
+        project_name = input("Введите название проекта: ")
+        print(tech_manager.manage_project(project_name))
+
+    maintenance_choice = input("Хотите, чтобы TechManager выполнил обслуживание? (да/нет): ").lower()
+    if maintenance_choice == 'да':
+        print(tech_manager.perform_maintenance())
+
+    print(f"\nTechManager характеристика с обслуживанием:")
+    print(tech_manager.get_info())
+    return tech_manager
+
+
+def add_employees_to_team(tech_manager):
+    print("\n--- Добавление сотрудников в команду ---")
+    while True:
+        add_more = input("Добавить сотрудника в команду? (да/нет): ").lower()
+        if add_more != 'да':
+            break
+
+        print("\nКого добавить в команду?")
+        print("1. Обычный сотрудник")
+        print("2. Менеджер")
+        print("3. Техник")
+        print("4. Вернуться назад")
+
+        choice = input("Выберите тип сотрудника (1-4): ")
+
+        if choice == '1':
+            employee = create_employee()
+            print(tech_manager.add_employee(employee))
+        elif choice == '2':
+            manager = create_manager()
+            print(tech_manager.add_employee(manager))
+        elif choice == '3':
+            technician = create_technician()
+            print(tech_manager.add_employee(technician))
+        elif choice == '4':
+            break
+        else:
+            print("Неверный выбор. Попробуйте снова.")
 
 
 def main():
-    print("Система управления сотрудниками")
-
-    # Создание менеджера
-    manager_name = input("Введите имя менеджера: ")
-    department = input("Введите отдел: ")
-    manager = Manager(manager_name, 1, 1000, department)
+    print("=== Система управления сотрудниками ===")
+    employees = []
 
     while True:
-        print("\nМеню:")
-        print("1 - Добавить сотрудника")
-        print("2 - Добавить проект")
-        print("3 - Показать команду")
-        print("4 - Показать зарплаты")
-        print("0 - Выход")
+        print("\n=== Главное меню ===")
+        print("1. Создать обычного сотрудника")
+        print("2. Создать менеджера")
+        print("3. Создать техника")
+        print("4. Создать TechManager")
+        print("5. Показать всех созданных сотрудников")
+        print("6. Выйти из программы")
 
-        choice = input("Выберите действие: ")
+        choice = input("Выберите действие (1-6): ")
 
-        if choice == "1":
-            emp_name = input("Имя сотрудника: ")
-            emp_salary = int(input("Зарплата сотрудника: "))
-            employee = Employee(emp_name, len(manager.team) + 2, emp_salary)
-            print(manager.add_to_team(employee))
+        if choice == '1':
+            employee = create_employee()
+            employees.append(("Сотрудник", employee))
 
-        elif choice == "2":
-            project = input("Название проекта: ")
-            print(manager.manage_project(project))
+        elif choice == '2':
+            manager = create_manager()
+            employees.append(("Менеджер", manager))
 
-        elif choice == "3":
-            print("Команда менеджера:")
-            print(manager.get_team_info())
+        elif choice == '3':
+            technician = create_technician()
+            employees.append(("Техник", technician))
 
-        elif choice == "4":
-            print("Зарплаты:")
-            print(f"{manager.name} (Manager): {manager.calculate_salary()}")
-            for emp in manager.team:
-                print(f"{emp.name} (Employee): {emp.calculate_salary()}")
+        elif choice == '4':
+            tech_manager = create_tech_manager()
+            employees.append(("TechManager", tech_manager))
 
-        elif choice == "0":
-            print("Выход из программы")
+            team_choice = input("Хотите добавить сотрудников в команду TechManager? (да/нет): ").lower()
+            if team_choice == 'да':
+                add_employees_to_team(tech_manager)
+                print("\nИнформация о команде:")
+                print(tech_manager.get_team_info())
+
+        elif choice == '5':
+            if not employees:
+                print("\nПока нет созданных сотрудников.")
+            else:
+                print("\n=== Все созданные сотрудники ===")
+                for i, (emp_type, emp) in enumerate(employees, 1):
+                    print(f"{i}. [{emp_type}] {emp.get_info()}")
+
+        elif choice == '6':
+            print("Выход из программы...")
             break
 
         else:
-            print("Неверный ввод")
+            print("Неверный выбор. Попробуйте снова.")
 
 
 if __name__ == "__main__":
     main()
-
-
